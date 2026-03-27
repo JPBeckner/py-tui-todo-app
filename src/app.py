@@ -13,10 +13,9 @@ from textual.widgets.option_list import Option
 
 from src.adapters.json import JsonAdapter
 from src.dtos.task import TaskDTO
-from src.widgets import Tasks, TaskDetails, TaskLists
-
-
-
+from src.widgets.task_details_static import TaskDetailsStatic
+from src.widgets.tasks import Tasks 
+from src.widgets.task_lists import TaskLists
 
 
 class ToDoApp(App):
@@ -42,9 +41,9 @@ class ToDoApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield TaskLists(classes="box", json_adapter=self.json_adapter)
-        yield Tasks(classes="box", json_adapter=self.json_adapter)
-        yield TaskDetails("", classes="box", id="task_details")
+        yield TaskLists(classes="box", json_adapter=self.json_adapter, id="task_lists")
+        yield Tasks(classes="box", json_adapter=self.json_adapter, id="tasks")
+        yield TaskDetailsStatic("", classes="box", id="task_details_static")
         yield Input(placeholder="todo ...", classes="input", id="input")
 
     def on_mount(self) -> None:
@@ -87,7 +86,7 @@ class ToDoApp(App):
         task_lists: TaskLists = self.query_one(TaskLists)
         tasks = self.json_adapter.get_all_tasks(event.option.id)
         for task in tasks:
-            tasks_widget.add_option(item=Selection(task.title, value=task.key, id=task.key))
+            tasks_widget.add_option(item=Selection(task.title, value=task.key, initial_state=task.completed, id=task.key))
         task_lists.focus()
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
