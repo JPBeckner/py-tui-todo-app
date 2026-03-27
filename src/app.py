@@ -53,11 +53,12 @@ class ToDoApp(App):
     @on(Input.Submitted, "#input")
     def new_item(self, event: Input.Submitted) -> None:
         if isinstance(self.app.current_requester, Tasks):
+            
             list_key = self.query_one(TaskLists).highlighted_option.id
-
-            tasks: Tasks = self.query_one(Tasks)
             key = f"{list_key}-{str(uuid4())[:8]}"
-            tasks.add_option(item=Selection(event.value, value=key))
+            
+            tasks: Tasks = self.query_one(Tasks)
+            tasks.add_option(item=Selection(event.value, value=key, id=key))
 
             self.json_adapter.new_task(list_key, TaskDTO(
                 key=key,
@@ -68,6 +69,7 @@ class ToDoApp(App):
                 completed=False
             ))
             self.query_one(Input).clear()
+            self.refresh()
             tasks.focus()
         if isinstance(self.app.current_requester, TaskLists):
             task_lists: TaskLists = self.query_one(TaskLists)
