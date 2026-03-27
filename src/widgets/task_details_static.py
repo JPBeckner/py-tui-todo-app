@@ -8,4 +8,4 @@ class TaskDetailsStatic(Static):
     ]
     def on_mount(self, event):
         self.border_title = "Task Details"
-        self.update("Select a task to see details")
+        self.update("")

@@ -5,13 +5,14 @@ from textual.binding import Binding
 # from src.widgets.tasks import Tasks
 # from src.widgets.task_lists import TaskLists
 from src.adapters.json import JsonAdapter
+# from src.widgets.tasks import Tasks
 
 
 class TaskDetailsText(TextArea):
 
     BINDINGS = [
         Binding(key="left", action="move_to_tasks", description="<-", show=True),
-        Binding(key="escape", action="close_details", description="Close Details", show=True),
+        Binding(key="escape", action="close_details_text", description="Close Details", show=True),
         Binding(key="ctrl+s", action="save_details", description="Save Details", show=True),
     ]
 
@@ -26,7 +27,7 @@ class TaskDetailsText(TextArea):
         compact = False, 
         language: str = "markdown", 
         theme: str = "css",
-        json_adapter: JsonAdapter = None,
+        json_adapter: JsonAdapter,
         **kwargs
     ):
         super().__init__(
@@ -49,7 +50,12 @@ class TaskDetailsText(TextArea):
         self.remove()
 
     def action_save_details(self) -> None:
-        # task_details = self.screen.query_one("#task_details", TaskDetailsStatic)
         task_key = self.screen.query_one("#tasks").highlighted_option.id
         list_key = self.screen.query_one("#task_lists").highlighted_option.id
-        self.screen.query_one("#tasks").json_adapter.update_task_description(list_key, task_key, self.value)
+        self.json_adapter.update_task_description(list_key, task_key, self.text)
+
+    def close_details_text(self):
+        self.screen.query_one("#task_details_text").remove()
+        tasks = self.screen.query_one("#tasks")
+        tasks.focus()
+        tasks.update_preview()
