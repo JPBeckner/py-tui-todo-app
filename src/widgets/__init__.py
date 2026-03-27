@@ -1,7 +1,7 @@
 from .task_lists import TaskLists
 from .tasks import Tasks
 from .task_details_text import TaskDetailsText
-from .task_details_pretty import TaskDetailsPretty
+from .task_details_viewer import TaskDetailsViewer
 from .task_details_static import TaskDetailsStatic
 
 
@@ -10,5 +10,5 @@ __all__ = [
     "Tasks",
     "TaskDetailsStatic",
     "TaskDetailsText",
-    "TaskDetailsPretty",
+    "TaskDetailsViewer",
 ]
