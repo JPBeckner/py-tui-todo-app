@@ -1,26 +1,10 @@
-# from textual.widgets import DataTable
-
-
-# COLUMNS = [
-#     ("#", "ToDo", "Completed", "Created"),
-# ]
-
-
-# class Tasks(DataTable):
-    
-#     def on_mount(self):
-#         self.cursor_type = "row"
-#         self.add_columns(*COLUMNS[0])
-
-from uuid import uuid4
-
 from textual import on
-from textual.selection import Selection
-from textual.widgets import Input, SelectionList
+from textual.widgets import Pretty, SelectionList, TextArea
 from textual.binding import Binding
 
 from src.adapters.json import JsonAdapter
 from src.dtos.task import TaskDTO
+from src.widgets.task_details import TaskDetails
 from src.widgets.task_lists import TaskLists
 
 
@@ -35,6 +19,7 @@ class Tasks(SelectionList):
         Binding(key="right", action="move_to_task_details", description="->", show=True),
         Binding(key="n", action="new", description="New Task", show=True),
         Binding(key="d", action="delete", description="Delete Task", show=True),
+        Binding(key="e", action="expand_task_details", description="Expand Task Details", show=True),
     ]
     
     def on_mount(self):
@@ -51,32 +36,35 @@ class Tasks(SelectionList):
         self.screen.query_one("#input").focus()
 
     def action_delete(self) -> None:
-        # tasks: Tasks = self.query_one(Tasks)
-        # if tasks.cursor_row is not None:
-        #     tasks.remove_row(list(tasks.rows.keys())[tasks.cursor_row])
 
         if self.highlighted_option:
             list_key = self.screen.query_one(TaskLists).highlighted_option.id
             self.remove_option(self.highlighted_option.value)
             self.json_adapter.remove_task(list_key, self.highlighted_option.id)
 
-    # @on(Input.Submitted, "#input")
-    # def new_todo(self, event: Input.Submitted) -> None:
-    #     if self.app.current_requester is self:
-    #         list_key = self.query_one(TaskLists).highlighted_option.id
-            
-    #         tasks: Tasks = self.query_one(Tasks)
-    #         key = f"{list_key}-{str(uuid4())[:8]}"
-    #         tasks.add_option(item=Selection(event.value, value=key))
-            
-    #         self.json_adapter.new_task(list_key, TaskDTO(
-    #             key=key,
-    #             title=event.value,
-    #             description="",
-    #             markdown="",
-    #             due_date=None,
-    #             completed=False
-    #         ))
-    #         self.query_one(Input).clear()
-    #         tasks.focus()
+    @on(SelectionList.OptionHighlighted)
+    def update_selected_view(self) -> None:
+        task_preview = self.screen.query_one_optional(Pretty)
+        if task_preview:
+            task_preview.remove()
+        task_details = self.screen.query_one("#task_details", TaskDetails)
+        task = self.json_adapter.get_task(self.highlighted_option.id, self.highlighted_option.id)
+        details = "No details available"
+        if task:
+            details = task.description if task.description else "No description"
+        preview = Pretty(details)
+        task_details.mount(preview)
 
+    def action_expand_task_details(self) -> None:
+        if self.highlighted_option:
+            list_key = self.screen.query_one(TaskLists).highlighted_option.id
+            task_key = self.highlighted_option.id
+            task = self.json_adapter.get_task(list_key, task_key)
+                
+            task_preview = self.screen.query_one_optional(Pretty)
+            if task_preview:
+                task_preview.remove()
+            detail_text = TextArea().code_editor(task.description if task and task.description else "", language="markdown")
+            task_details = self.screen.query_one("#task_details", TaskDetails)
+            task_details.mount(detail_text)
+            detail_text.focus()
