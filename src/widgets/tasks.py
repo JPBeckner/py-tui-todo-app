@@ -4,7 +4,7 @@ from textual.binding import Binding
 
 from src.adapters.json import JsonAdapter
 from src.dtos.task import TaskDTO
-from src.widgets.task_details_pretty import TaskDetailsPretty
+from src.widgets.task_details_viewer import TaskDetailsViewer
 from src.widgets.task_details_static import TaskDetailsStatic
 from src.widgets.task_details_text import TaskDetailsText
 from src.widgets.task_lists import TaskLists
@@ -12,16 +12,56 @@ from src.widgets.task_lists import TaskLists
 
 class Tasks(SelectionList):
     
-    def __init__(self, *selections, name = None, id = None, classes = None, disabled = False, compact = False, json_adapter: JsonAdapter = None):
-        super().__init__(*selections, name=name, id=id, classes=classes, disabled=disabled, compact=compact)
+    def __init__(self, 
+        *selections, 
+        name = None, 
+        id = None, 
+        classes = None, 
+        disabled = False, 
+        compact = False, 
+        json_adapter: JsonAdapter = None
+    ):
+        super().__init__(
+            *selections, 
+            name=name, 
+            id=id, 
+            classes=classes, 
+            disabled=disabled, 
+            compact=compact
+        )
         self.json_adapter = json_adapter
     
     BINDINGS = [
-        Binding(key="left", action="move_to_task_lists", description="<-", show=True),
-        Binding(key="right", action="move_to_task_details", description="->", show=True),
-        Binding(key="n", action="new", description="New Task", show=True),
-        Binding(key="d", action="delete", description="Delete Task", show=True),
-        Binding(key="e", action="expand_task_details", description="Expand Task Details", show=True),
+        Binding(
+            key="left", 
+            action="move_to_task_lists", 
+            description="<-", 
+            show=True
+        ),
+        Binding(
+            key="right", 
+            action="move_to_task_details", 
+            description="->", 
+            show=True
+        ),
+        Binding(
+            key="n", 
+            action="new", 
+            description="New Task", 
+            show=True
+        ),
+        Binding(
+            key="d", 
+            action="delete", 
+            description="Delete Task", 
+            show=True
+        ),
+        Binding(
+            key="e", 
+            action="expand_task_details", 
+            description="Expand Task Details", 
+            show=True
+        ),
     ]
     
     def on_mount(self):
@@ -46,16 +86,20 @@ class Tasks(SelectionList):
             self.json_adapter.remove_task(list_key, task_id)
 
     @on(SelectionList.OptionHighlighted)
-    def update_preview(self) -> None:
-        task_preview = self.screen.query_one_optional(TaskDetailsPretty)
+    async def update_preview(self) -> None:
+        task_preview = self.screen.query_one_optional("#task_details_viewer")
         if task_preview:
-            task_preview.remove()
-        task_details = self.screen.query_one("#task_details_static", TaskDetailsStatic)
-        task = self.json_adapter.get_task(self.highlighted_option.id, self.highlighted_option.id)
-        details = "No details available"
-        if task:
-            details = task.description if task.description else "No description"
-        preview = TaskDetailsPretty(details)
+            await task_preview.remove()
+        task_details = self.screen.query_one(
+            "#task_details_static", 
+            TaskDetailsStatic
+        )
+        task = self.json_adapter.get_task(
+            self.screen.query_one(TaskLists).highlighted_option.id, 
+            self.highlighted_option.id
+        )
+        details = task.description if task else "No description"
+        preview = TaskDetailsViewer(details, id="task_details_viewer")
         task_details.mount(preview)
 
     @on(SelectionList.OptionSelected)
@@ -74,10 +118,17 @@ class Tasks(SelectionList):
             task_key = self.highlighted_option.id
             task = self.json_adapter.get_task(list_key, task_key)
                 
-            task_preview = self.screen.query_one_optional(TaskDetailsPretty)
+            task_preview = self.screen.query_one_optional(TaskDetailsViewer)
             if task_preview:
                 task_preview.remove()
-            detail_text = TaskDetailsText().code_editor(task.description if task and task.description else "", language="markdown")
+            text = task.description or ""
+            detail_text = TaskDetailsText(
+                text=text,
+                language="markdown",
+                id="task_details_text", 
+                json_adapter=self.json_adapter
+            )
+
             task_details = self.screen.query_one("#task_details_static")
             task_details.mount(detail_text)
             detail_text.focus()
