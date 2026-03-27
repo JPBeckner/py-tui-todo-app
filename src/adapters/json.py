@@ -96,3 +96,12 @@ class JsonAdapter:
             if task_list.key == list_key:
                 return task_list.tasks
         return []
+
+    def get_task(self, list_key: str, task_key: str) -> TaskDTO | None:
+        self.load()
+        for task_list in self.task_lists:
+            if task_list.key == list_key:
+                for task in task_list.tasks:
+                    if task.key == task_key:
+                        return task
+        return None
