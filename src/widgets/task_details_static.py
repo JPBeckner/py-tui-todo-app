@@ -2,7 +2,7 @@ from textual.binding import Binding
 from textual.widgets import Static, TextArea
 
 
-class TaskDetails(Static):
+class TaskDetailsStatic(Static):
     BINDINGS = [
         Binding(key="left", action="move_to_tasks", description="<-", show=True),
     ]
