@@ -1,0 +1,28 @@
+Screen {
+    layout: grid;
+    grid-size: 3 6;
+    grid-rows: 1fr;
+    grid-columns: 1fr;
+    grid-gutter: 1;
+}
+
+.box {
+    height: 100%;
+    border: solid green;
+    row-span: 5;
+}
+
+.input {
+    height: 100%;
+    border: round green;
+}
+
+#input {
+    dock: bottom;
+    /* row-span: 1; */
+    column-span: 3;
+    height: auto;
+    width: 100%;
+    align-horizontal: center;
+
+}
