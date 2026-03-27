@@ -38,8 +38,9 @@ class Tasks(SelectionList):
     def action_delete(self) -> None:
 
         if self.highlighted_option:
+            
+            self.remove_option(self.highlighted_option.id)
             list_key = self.screen.query_one(TaskLists).highlighted_option.id
-            self.remove_option(self.highlighted_option.value)
             self.json_adapter.remove_task(list_key, self.highlighted_option.id)
 
     @on(SelectionList.OptionHighlighted)
