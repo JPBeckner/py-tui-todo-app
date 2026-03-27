@@ -4,7 +4,9 @@ from textual.binding import Binding
 
 from src.adapters.json import JsonAdapter
 from src.dtos.task import TaskDTO
-from src.widgets.task_details import TaskDetails
+from src.widgets.task_details_pretty import TaskDetailsPretty
+from src.widgets.task_details_static import TaskDetailsStatic
+from src.widgets.task_details_text import TaskDetailsText
 from src.widgets.task_lists import TaskLists
 
 
@@ -38,23 +40,33 @@ class Tasks(SelectionList):
     def action_delete(self) -> None:
 
         if self.highlighted_option:
-            
-            self.remove_option(self.highlighted_option.id)
+            task_id=self.highlighted_option.id
+            self.remove_option(task_id)
             list_key = self.screen.query_one(TaskLists).highlighted_option.id
-            self.json_adapter.remove_task(list_key, self.highlighted_option.id)
+            self.json_adapter.remove_task(list_key, task_id)
 
     @on(SelectionList.OptionHighlighted)
-    def update_selected_view(self) -> None:
-        task_preview = self.screen.query_one_optional(Pretty)
+    def update_preview(self) -> None:
+        task_preview = self.screen.query_one_optional(TaskDetailsPretty)
         if task_preview:
             task_preview.remove()
-        task_details = self.screen.query_one("#task_details", TaskDetails)
+        task_details = self.screen.query_one("#task_details_static", TaskDetailsStatic)
         task = self.json_adapter.get_task(self.highlighted_option.id, self.highlighted_option.id)
         details = "No details available"
         if task:
             details = task.description if task.description else "No description"
-        preview = Pretty(details)
+        preview = TaskDetailsPretty(details)
         task_details.mount(preview)
+
+    @on(SelectionList.OptionSelected)
+    def update_completed_on_selection(self) -> None:
+        list_key = self.screen.query_one(TaskLists).highlighted_option.id
+        task_key = self.highlighted_option.id
+        task = self.json_adapter.get_task(list_key, task_key)
+        if task:
+            task.completed = not task.completed
+            self.json_adapter.update_task(list_key, task)
+            self.refresh()
 
     def action_expand_task_details(self) -> None:
         if self.highlighted_option:
@@ -62,10 +74,10 @@ class Tasks(SelectionList):
             task_key = self.highlighted_option.id
             task = self.json_adapter.get_task(list_key, task_key)
                 
-            task_preview = self.screen.query_one_optional(Pretty)
+            task_preview = self.screen.query_one_optional(TaskDetailsPretty)
             if task_preview:
                 task_preview.remove()
-            detail_text = TextArea().code_editor(task.description if task and task.description else "", language="markdown")
-            task_details = self.screen.query_one("#task_details", TaskDetails)
+            detail_text = TaskDetailsText().code_editor(task.description if task and task.description else "", language="markdown")
+            task_details = self.screen.query_one("#task_details_static")
             task_details.mount(detail_text)
             detail_text.focus()
