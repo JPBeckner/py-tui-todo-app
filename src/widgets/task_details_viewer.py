@@ -1,6 +1,6 @@
-from textual.widgets import Pretty
+from textual.widgets import Markdown
 
 
-class TaskDetailsPretty(Pretty):
+class TaskDetailsViewer(Markdown):
     def __init__(self, *content, object=None, name = None, id = None, classes = None):
         super().__init__(*content, name=name, id=id, classes=classes)
